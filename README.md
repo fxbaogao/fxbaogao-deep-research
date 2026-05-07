@@ -44,7 +44,7 @@ fxbaogao-deep-research 提供一套面向发现报告的研报研究流程：
 ### 1：Git Clone
 
 ```bash
-git clone git@github.com:EliaukTM/fxbaogao-deep-research.git
+git clone git@github.com:fxbaogao/fxbaogao-deep-research.git
 cd fxbaogao-deep-research
 python3 -m pip install -r requirements.txt
 cp .env.example .env
@@ -55,7 +55,7 @@ cp .env.example .env
 ```dotenv
 FXBAOGAO_API_KEY=your_key
 FXBAOGAO_API_URL=https://api.fxbaogao.com
-FXBAOGAO_USE_PDF_READING=false
+FXBAOGAO_USE_PDF_READING=true
 ```
 
 ### 2：作为本地 Skill 使用
