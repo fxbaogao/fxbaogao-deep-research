@@ -60,7 +60,7 @@ FXBAOGAO_USE_PDF_READING=true
 
 ### 2：作为本地 Skill 使用
 
-把本项目目录放入你的 Codex skills 目录，或在当前仓库中直接使用 `SKILL.md`。
+把本项目目录放入你的 Claude skills 目录，或在当前仓库中直接使用 `SKILL.md`。
 
 ```bash
 cp -r fxbaogao-deep-research ~/.claude/skills/
@@ -151,7 +151,7 @@ workspace/topic-<主题>-<日期>/
 ```text
 用户：深度调研 荣耀终端股份有限公司竞争力与增长前景
 
-Codex：
+Claude：
 - 判断主题：公司竞争力与增长前景研究
 - 界定边界：智能终端、AI 手机、渠道、供应链、海外扩张
 - 拆解子问题：市场位置、产品组合、技术能力、渠道表现、风险约束
