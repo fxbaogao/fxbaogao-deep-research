@@ -1,6 +1,6 @@
 ---
 name: fxbaogao-deep-research
-description: 围绕行业、公司或主题做深度研究。采用"先想后搜"方法：先明确研究边界，用 MECE 原则拆解关键子问题，再基于子问题定向搜索、筛选核心研报，精读后沉淀事实、对比推导，最终形成结构化结论。
+description: 围绕行业、公司或主题做深度研究。采用"先想后搜"方法：先明确研究边界，用 MECE 原则拆解关键子问题，再基于发现报告接口定向搜索、筛选核心研报、精读后沉淀事实、对比推导，最终形成结构化结论。
 argument-hint: "[关键词] [--time last1mon|last3mon]"
 ---
 
@@ -11,6 +11,43 @@ argument-hint: "[关键词] [--time last1mon|last3mon]"
 - 研究行业、公司或主题（如 `5G`、`光模块`、`宁德时代`）
 - 需要系统地收集研报并进行结构化分析
 - 需从海量报告中快速定位核心观点，避免信息过载
+
+## 基本原则
+
+调用接口前必须先阅读：
+
+- `references/api-usage.md`：接口、参数、回包字段、curl 示例、鉴权、PDF 地址拼接规则
+
+通过 Agent API Gateway 调用发现报告资料检索、详情查询和 PDF 下载
+
+### 单篇报告精读优先规则
+
+当用户给出明确报告 ID、单篇 PDF、单篇报告标题，或明确要求“精读某一篇报告”时，直接进入 `references/report-reader-playbook.md` 的单篇报告流程。
+
+单篇精读不适用完整深度研究流程：
+
+- 不创建 `workspace/topic-<主题>-<日期>/` 形式的多篇研究工作区，除非用户明确要求沉淀文件。
+- 不产出 `00_问题拆解.md`、`01_资料来源.md`、`03_对比框架.md`、`04_推导过程.md`。
+- 不要求先做 MECE 子问题搜索矩阵，也不额外搜索候选研报。
+- 只围绕该报告输出：报告基础信息、核心逻辑、假设与证据、事实卡片、风险与待外部验证点、最终精读判断。
+- 如果需要写入文件，优先写成单个 `REPORT_READER_精读分析.md`；事实卡片可作为其中一个章节，除非用户明确要求单独文件。
+
+### 建立工作区
+
+沉淀完整研究过程，创建如下目录结构：
+
+```text
+workspace/topic-<主题>-<日期>/
+├── REPORT_READER_精读分析.md
+├── FINAL_调研报告.md
+└── intermediate/
+    ├── 00_问题拆解.md
+    ├── 01_资料来源.md
+    ├── 02_事实卡片.md
+    ├── 03_对比框架.md
+    └── 04_推导过程.md
+```
+模板位于 `assets/workspace_templates/`，可按需参考其结构。
 
 ## 核心思想
 
@@ -26,9 +63,7 @@ argument-hint: "[关键词] [--time last1mon|last3mon]"
 8. 填写 `intermediate/03_对比框架.md` 和 `intermediate/04_推导过程.md`
 9. 汇总输出 `FINAL_调研报告.md`
 
-硬性门槛：在调用 `search_reports.py`、`prepare_topic_research.py`、`get_report_detail.py`
-或 `download_report.py` 之前，必须先产出可审阅的研究边界和 MECE 子问题搜索矩阵。
-如果用户没有给出边界，先做保守默认并明确写出；只有边界会显著改变结论时才停下来追问。
+硬性门槛：在调用任何发现报告接口之前，必须先产出可审阅的研究边界和 MECE 子问题搜索矩阵。如果用户没有给出边界，先做保守默认并明确写出；只有边界会显著改变结论时才停下来追问。
 
 ## 主工作流
 
@@ -40,12 +75,12 @@ argument-hint: "[关键词] [--time last1mon|last3mon]"
 - 时间范围、地域、产业链环节等边界条件是什么？
 - 希望回答的核心问题是什么？
 
-输出一个清晰的主题陈述，例如："2022–2025 年国内光模块行业竞争格局与关键驱动因素"。
-首次进入研究任务时，先在回复中给出这份主题陈述，不要先跑搜索命令。
+输出一个清晰的主题陈述，例如："2022-2025 年国内光模块行业竞争格局与关键驱动因素"。
+首次进入研究任务时，先在回复中给出这份主题陈述，不要先调用接口。
 
 ### 第二步：MECE 拆解关键子问题
 
-基于主题，采用 MECE 原则（相互独立、完全穷尽）拆解为 3–7 个子问题。
+基于主题，采用 MECE 原则（相互独立、完全穷尽）拆解为 3-7 个子问题。
 示例（光模块）：
 
 1. 市场规模与增速（量、价驱动）
@@ -55,77 +90,58 @@ argument-hint: "[关键词] [--time last1mon|last3mon]"
 5. 上游芯片供应与瓶颈
 6. 政策与贸易壁垒影响
 
-每个子问题即为一个**搜索维度**。
+每个子问题即为一个搜索维度。
 每个子问题必须同时给出：要验证的判断、搜索关键词、是否属于核心维度。
 没有搜索关键词的子问题不能进入检索阶段。
 
 ### 第三步：基于子问题定向搜索并收集候选研报
 
-对每个子问题，使用对应关键词（可组合 `--org`、`--time` 等参数）发起搜索，合并结果形成候选报告池。
+对每个子问题，按 `references/api-usage.md` 调用搜索接口。
 不要把宽泛主题词作为第一轮唯一查询；宽泛主题词只能作为兜底补充。
 
 ```bash
-python3 scripts/prepare_topic_research.py "<研究主题>" --time last1year --size 60 --detail-count 50 --detail-per-subquery 10 --json \
-  --subquery "市场规模=光模块 市场规模 增速 800G 1.6T" \
-  --subquery "需求结构=光模块 AI算力 云厂商 电信 需求" \
-  --subquery "竞争格局=光模块 中际旭创 新易盛 份额 毛利率"
+curl -X POST "https://api.fxbaogao.com/mofoun/report/searchReport/search" \
+  -H "Authorization: Bearer $FXBAOGAO_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"keywords":"光模块 800G AI算力","authors":[],"orgNames":[],"paragraphSize":3,"endTime":"last1year","pageSize":20,"pageNum":1}'
 ```
 
 建议工作方式：
 
-- 先针对 3–6 个核心子问题搜索，避免报告过多
-- 每个子问题默认取 60 篇候选；深度研究默认预拉取 50 篇详情
-- 每个核心子问题优先精读约 10 篇；若子问题少于 5 个，用总览和交叉维度报告补足到约 50 篇
-- 若核心子问题超过 5 个且未显式指定 `--detail-count`，总精读数按 `子问题数 × 10` 自动上调
-- 用 `--subquery "子问题=关键词"` 保留报告与子问题的映射
-- 默认额外补充一轮宽泛主题词搜索，捕捉行业总览和跨维度报告；只有结果过多时才加 `--no-broad-topic`
-- 自动生成 `intermediate/00_问题拆解.md`、`intermediate/candidate-reports.md` 和 `intermediate/selected-reports.md`
+- 先针对 3-6 个核心子问题搜索，避免报告过多
+- 每个子问题默认查看 20-60 篇候选
+- 若需要正式深度研究，每个核心子问题优先精读约 10 篇
+- 额外补充一轮宽泛主题词搜索，捕捉行业总览和跨维度报告
+- 用 Markdown 保留报告与子问题的映射
 
 ### 第四步：筛选核心报告，剔除无关项
 
 对候选清单执行三级筛选：
 
-- **相关性**：标题/摘要与子问题完全无关 → 剔除
-- **时效性与深度**：数据过于陈旧、仅新闻简评 → 剔除
+- **相关性**：标题/摘要与子问题完全无关则剔除
+- **时效性与深度**：数据过于陈旧、仅新闻简评则剔除
 - **机构/作者权威性**：优选知名券商、咨询公司、产业专家
 
-保留 40–60 篇核心报告，输出 `intermediate/selected-reports.md`，并标注每篇对应解决哪一个子问题。
-其中优先精读约 50 篇，覆盖所有核心子问题；不要只精读搜索结果排序最靠前的几篇。
+保留核心报告，并标注每篇对应解决哪一个子问题。不要只精读搜索结果排序最靠前的几篇。
 
-### 第五步：调取核心报告详情，准备研究工作区
+### 第五步：调取核心报告详情
 
-对筛选出的每一篇报告，拉取详情：
-
-```bash
-python3 scripts/get_report_detail.py <report_id> --keyword "<搜索关键词>" --json
-```
-
-主题研究和单篇报告工作区默认创建在当前项目目录的 `workspace/` 下；如需其它位置，显式传 `--output-root`。
-
-如需下载 PDF 源文件（需 API key），先在 `.env` 中开启 PDF 精读模式：
+对筛选出的核心报告，按 `references/api-usage.md` 调用详情接口：
 
 ```bash
-# 先在 fxbaogao-deep-research/.env 中填写 FXBAOGAO_API_KEY=your_key
-FXBAOGAO_USE_PDF_READING=true
-python3 scripts/download_report.py <report_id> --output-dir ./downloads --json
-# 主题研究默认下载入选精读报告 PDF；如只补已有工作区
-python3 scripts/download_report.py --workspace workspace/topic-xxx-YYYYMMDD --strict --json
+curl -X POST "https://api.fxbaogao.com/mofoun/report/searchReport/detail" \
+  -H "Authorization: Bearer $FXBAOGAO_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"id":5339478,"keyword":"光模块 800G"}'
 ```
 
-无 API key 时会明确提示，不伪装成已下载。
+如需 PDF 源文件，调用下载接口并从回包中取得 `data.resources[].pdfUrl` / `url`。相对路径使用 `https://dr.fxbaogao.com/` 拼接。
 
 ### 第六步：精读核心报告
 
 参考 `references/report-reader-playbook.md`，将每篇报告的分析填入 `REPORT_READER_精读分析.md`。
-如果 `.env` 中 `FXBAOGAO_USE_PDF_READING=true`，精读必须优先打开 `intermediate/downloads/` 下的 PDF 原文；详情接口的摘要和正文摘录只用于初筛和定位，不替代原文核对，精读必须信息基于 pdf 内容。
-如果未开启 PDF 精读模式，精读和后续事实卡片、对比框架、最终结论可以基于 detail 接口的摘要、目录和正文摘录生成，但要明确这是 detail 模式。
 
-PDF 模式硬性规则：
-
-- PDF 模式依赖 `requirements.txt` 中的 Python 包。
-- 开始 PDF 研究前先运行 `python3 scripts/validate.py .`。
-- 如果校验提示缺依赖，运行 `python3 -m pip install -r requirements.txt` 后再继续。
-- 不要在缺依赖时回退到 detail，也不要把 detail 摘要或正文摘录伪装成 PDF 原文精读。
+detail 回包适合快速初筛和轻量研究。正式研究、需要引用原文或需要更高可复核性时，必须基于 PDF 原文核对，不要把 detail 摘要或正文摘录伪装成 PDF 原文精读。
 
 精读要点：
 
@@ -158,25 +174,15 @@ PDF 模式硬性规则：
 
 ## 环境变量
 
-鉴权信息默认从 skill 根目录的 `.env` 读取，已有的系统环境变量会优先覆盖 `.env`。
-`FXBAOGAO_API_KEY` 会通过请求头 `Authorization: Bearer <FXBAOGAO_API_KEY>` 发送。
-搜索、详情和下载接口都需要鉴权。
-
 必要配置：
-
 - `FXBAOGAO_API_KEY`
 
-可选配置：
-
-- `FXBAOGAO_API_URL`
-  - 默认 `https://api.fxbaogao.com`
-
-详见 `references/runtime-config.md`
 
 ## 回复约定
 
-- 第一条实质回复必须包含：研究边界、核心问题、3–7 个 MECE 子问题、搜索关键词矩阵
+- 第一条实质回复必须包含：研究边界、核心问题、3-7 个 MECE 子问题、搜索关键词矩阵
 - 先界定研究主题，再用 MECE 方法拆解为子问题，然后定向搜索
+- 直接调用接口并用 Markdown 展示结果
 - 搜索结果按与子问题的相关性分层呈现，不逐篇倾倒
 - 详情回答优先提供总结与 key takeaways，不整段复制正文
 - 不伪造作者、机构、日期、摘要；所有引用需可溯源
