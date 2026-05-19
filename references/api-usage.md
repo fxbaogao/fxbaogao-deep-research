@@ -101,8 +101,6 @@ curl -X POST "https://api.fxbaogao.com/mofoun/report/searchReport/detail" \
 | `data.report.authors` | 作者 |
 | `data.report.pubTime` / `pubTimeStr` | 发布时间 |
 | `data.summaryHtml` / `data.summary` | 摘要 |
-| `data.questions` | 关键问题 |
-| `data.catalogList` | 目录 |
 | `data.content` / `data.paragraphObjs` | 正文摘录 |
 
 
@@ -136,4 +134,3 @@ curl -L "https://api.fxbaogao.com/mofoun/report/report/file/downloadReport?repor
 https://dr.fxbaogao.com/
 ```
 
-detail 接口中的 `data.readReport.pdfUrl` 也遵循同样规则。
